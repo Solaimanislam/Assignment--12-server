@@ -27,6 +27,27 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         // await client.connect();
 
+        const testCollection = client.db("DiagnosticDB").collection('test');
+        const bookedCollection = client.db("DiagnosticDB").collection('booked');
+
+        // test related api
+        app.get('/test', async (req, res) => {
+            const result = await testCollection.find().toArray();
+            res.send(result);
+        })
+
+        // booked collections
+        app.get('/booked', async (req, res) => {
+            const result = await bookedCollection.find().toArray();
+            res.send(result);
+        })
+
+        app.post('/booked', async (req, res) => {
+            const bookedItem = req.body;
+            const result = await bookedCollection.insertOne(bookedItem);
+            res.send(result);
+        })
+
 
 
         // Send a ping to confirm a successful connection
