@@ -137,6 +137,19 @@ async function run() {
             res.send(result);
         })
 
+        app.post('/test', verifyToken, verifyAdmin, async (req, res) => {
+            const item = req.body;
+            const result = await testCollection.insertOne(item);
+            res.send(result);
+        })
+
+        app.delete('/test/:id', verifyToken, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await testCollection.deleteOne(query);
+            res.send(result);
+        })
+
         // booked collections
         app.get('/booked', async (req, res) => {
             const result = await bookedCollection.find().toArray();
