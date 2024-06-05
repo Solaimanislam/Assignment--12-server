@@ -137,9 +137,35 @@ async function run() {
             res.send(result);
         })
 
+        // update test item
+        app.get('/test/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await testCollection.findOne(query);
+            res.send(result);
+        })
+
         app.post('/test', verifyToken, verifyAdmin, async (req, res) => {
             const item = req.body;
             const result = await testCollection.insertOne(item);
+            res.send(result);
+        })
+
+        app.patch('/test/:id', async (req, res) => {
+            const item = req.body;
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    title: item.title,
+                    price: item.price,
+                    date: item.date,
+                    slots: item.slots,
+                    short_description: item.short_description,
+                    image: item.image
+                }
+            }
+            const result = await testCollection.updateOne(filter, updatedDoc);
             res.send(result);
         })
 
