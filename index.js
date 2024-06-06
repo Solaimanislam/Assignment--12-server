@@ -32,6 +32,7 @@ async function run() {
         const userCollection = client.db("DiagnosticDB").collection('users');
         const testCollection = client.db("DiagnosticDB").collection('test');
         const bookedCollection = client.db("DiagnosticDB").collection('booked');
+        const paymentCollection = client.db("DiagnosticDB").collection('payments');
 
         // JWT related api
         app.post('/jwt', async (req, res) => {
@@ -115,6 +116,19 @@ async function run() {
                 }
             }
             const result = await userCollection.updateOne(filter, updatedDoc);
+            res.send(result);
+        })
+
+
+        app.patch('/users/cancel/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: id };
+            const updatedDoc = {
+                $set: {
+                    status: 'Canceled'
+                }
+            }
+            const result = await bookedCollection.updateOne(filter, updatedDoc);
             res.send(result);
         })
 
@@ -203,6 +217,27 @@ async function run() {
             res.send({
                 clientSecret: paymentIntent.client_secret
             })
+        })
+
+        app.post('/payments', async (req, res) => {
+            const payment = req.body;
+            const paymentResult = await paymentCollection.insertOne(payment);
+
+            // carefully delete each item from the cart
+            console.log('payment info', payment);
+            res.send(paymentResult);
+            const query = {
+                _id: {
+
+                    $in: payment.cartIds.map(id => new ObjectId(id))
+                }
+            };
+
+            const deleteResult = await bookedCollection.deleteMany(query);
+
+            res.send({ paymentResult, deleteResult });
+
+
         })
 
 
