@@ -33,6 +33,7 @@ async function run() {
         const testCollection = client.db("DiagnosticDB").collection('test');
         const bookedCollection = client.db("DiagnosticDB").collection('booked');
         const paymentCollection = client.db("DiagnosticDB").collection('payments');
+        const bannerCollection = client.db("DiagnosticDB").collection('banners');
 
         // JWT related api
         app.post('/jwt', async (req, res) => {
@@ -119,18 +120,18 @@ async function run() {
             res.send(result);
         })
 
-
         app.patch('/users/cancel/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: id };
             const updatedDoc = {
                 $set: {
-                    status: 'Canceled'
+                    status: 'canceled'
                 }
             }
-            const result = await bookedCollection.updateOne(filter, updatedDoc);
+            const result = await paymentCollection.updateOne(filter, updatedDoc);
             res.send(result);
         })
+        
 
         app.post('/users', async (req, res) => {
             const user = req.body;
@@ -141,6 +142,25 @@ async function run() {
                 return res.send({ message: 'User already exists', insertedId: null })
             }
             const result = await userCollection.insertOne(user);
+            res.send(result);
+        })
+
+        // banner related api
+        app.post('/banner', verifyToken, verifyAdmin, async (req, res) => {
+            const item = req.body;
+            const result = await bannerCollection.insertOne(item);
+            res.send(result);
+        })
+
+        app.get('/banner', verifyToken, verifyAdmin, async (req, res) => {
+            const result = await bannerCollection.find().toArray();
+            res.send(result);
+        })
+
+        app.delete('/banner/:id', verifyToken, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await bannerCollection.deleteOne(query);
             res.send(result);
         })
 
@@ -197,6 +217,20 @@ async function run() {
             res.send(result);
         })
 
+        app.get('/payment', async (req, res) => {
+            const result = await paymentCollection.find().toArray();
+            res.send(result);
+        })
+
+        // app.get('/payments/:email', verifyToken, async (req, res) => {
+        //     const query = { email: req.params.email }
+        //     if (req.params.email !== req.decoded.email) {
+        //         return res.status(403).send({ message: 'Forbidden Access' })
+        //     }
+        //     const result = await paymentCollection.find(query).toArray();
+        //     res.send(result);
+        // })
+
         app.post('/booked', async (req, res) => {
             const bookedItem = req.body;
             const result = await bookedCollection.insertOne(bookedItem);
@@ -238,6 +272,32 @@ async function run() {
             res.send({ paymentResult, deleteResult });
 
 
+        })
+
+        // states or analytics
+        app.get('/admin-states', verifyToken, verifyAdmin, async (req, res) => {
+            const users = await userCollection.estimatedDocumentCount();
+            const testItems = await testCollection.estimatedDocumentCount();
+            const bookedItems = await bookedCollection.estimatedDocumentCount();
+            // const payments = await paymentCollection.find().toArray();
+            // const revenue = payments.reduce((total, payment) => total + payment.price, 0)
+            const result = await paymentCollection.aggregate([
+                {
+                    $group: {
+                        _id: null,
+                        totalRevenue: {
+                            $sum: '$price'
+                        }
+                    }
+                }
+            ]).toArray();
+            const revenue = result.length > 0 ? result[0].totalRevenue : 0 ;
+            res.send({
+                users,
+                testItems,
+                bookedItems,
+                revenue
+            })
         })
 
 
