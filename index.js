@@ -160,6 +160,19 @@ async function run() {
             const query = { email: email }
             const result = await testCollection.find(query).toArray();
             res.send(result);
+
+        })
+
+        // get all test data for pagination
+        app.get('/all-test', async (req, res) => {
+            const result = await testCollection.find().toArray();
+            res.send(result);
+        })
+
+        // get all test data for db count
+        app.get('/test-count', async (req, res) => {
+            const count = await testCollection.countDocuments()
+            res.send({count});
         })
 
         // update test item
