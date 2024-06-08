@@ -74,7 +74,7 @@ async function run() {
 
         // users related api
 
-        app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
+        app.get('/users',  async (req, res) => {
 
             const result = await userCollection.find().toArray();
             res.send(result);
@@ -120,18 +120,8 @@ async function run() {
             res.send(result);
         })
 
-        app.patch('/users/cancel/:id', async (req, res) => {
-            const id = req.params.id;
-            const filter = { _id: id };
-            const updatedDoc = {
-                $set: {
-                    status: 'canceled'
-                }
-            }
-            const result = await paymentCollection.updateOne(filter, updatedDoc);
-            res.send(result);
-        })
-        
+
+
 
         app.post('/users', async (req, res) => {
             const user = req.body;
@@ -222,6 +212,18 @@ async function run() {
             res.send(result);
         })
 
+        app.patch('/payment/cancel/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    status: 'canceled'
+                }
+            }
+            const result = await paymentCollection.updateOne(filter, updatedDoc);
+            res.send(result);
+        })
+
         // app.get('/payments/:email', verifyToken, async (req, res) => {
         //     const query = { email: req.params.email }
         //     if (req.params.email !== req.decoded.email) {
@@ -291,7 +293,7 @@ async function run() {
                     }
                 }
             ]).toArray();
-            const revenue = result.length > 0 ? result[0].totalRevenue : 0 ;
+            const revenue = result.length > 0 ? result[0].totalRevenue : 0;
             res.send({
                 users,
                 testItems,
