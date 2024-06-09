@@ -165,7 +165,10 @@ async function run() {
 
         // get all test data for pagination
         app.get('/all-test', async (req, res) => {
-            const result = await testCollection.find().toArray();
+            const size = parseInt(req.query.size);
+            const page = parseInt(req.query.page);
+            console.log(size, page);
+            const result = await testCollection.find().limit(size).toArray();
             res.send(result);
         })
 
