@@ -31,9 +31,11 @@ async function run() {
 
         const userCollection = client.db("DiagnosticDB").collection('users');
         const testCollection = client.db("DiagnosticDB").collection('test');
+        const reviewCollection = client.db("DiagnosticDB").collection('reviews');
         const bookedCollection = client.db("DiagnosticDB").collection('booked');
         const paymentCollection = client.db("DiagnosticDB").collection('payments');
         const bannerCollection = client.db("DiagnosticDB").collection('banners');
+        const cartCollection = client.db("DiagnosticDB").collection('carts');
 
         // JWT related api
         app.post('/jwt', async (req, res) => {
@@ -72,9 +74,16 @@ async function run() {
             next();
         }
 
+        // carts collection
+        app.post('/carts', async (req, res) => {
+            const cartItem = req.body;
+            const result = await cartCollection.insertOne(cartItem);
+            res.send(result);
+        } )
+
         // users related api
 
-        app.get('/users',  async (req, res) => {
+        app.get('/users', async (req, res) => {
 
             const result = await userCollection.find().toArray();
             res.send(result);
@@ -167,15 +176,33 @@ async function run() {
         app.get('/all-test', async (req, res) => {
             const size = parseInt(req.query.size);
             const page = parseInt(req.query.page);
+            const filter = req.query.filter;
+            const sort = req.query.sort;
+            console.log(sort);
+            // const search = req.query.search;
             console.log(size, page);
-            const result = await testCollection.find().limit(size).toArray();
+
+            // let query = {
+            //     test_title: { $regex: search}
+            // }
+            if (filter) query.duration =  filter 
+            
+            
+            const result = await testCollection.find({}).sort({date : sort === 'asc' ? 1 : -1}).skip(page * size).limit(size).toArray();
+            console.log(result.length);
             res.send(result);
         })
 
         // get all test data for db count
         app.get('/test-count', async (req, res) => {
-            const count = await testCollection.countDocuments()
-            res.send({count});
+            const filter = req.query.filter;
+            // const search = req.query.search;
+            // let query = {
+            //     test_title: { $regex: search}
+            // }
+            if (filter) query.duration =  filter 
+            const count = await testCollection.countDocuments(query)
+            res.send({ count });
         })
 
         // update test item
@@ -237,6 +264,11 @@ async function run() {
                 }
             }
             const result = await paymentCollection.updateOne(filter, updatedDoc);
+            res.send(result);
+        })
+
+        app.get('/reviews', async (req, res) => {
+            const result = await reviewCollection.find().toArray();
             res.send(result);
         })
 
